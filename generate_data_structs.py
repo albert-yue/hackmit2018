@@ -140,26 +140,29 @@ def process_transcript(rev_results, filepath):
 #		in them (perhaps by pinging a website using the requests module?). Other than that, this should be quite simple;
 #		just add a newly discovered phoneme to the dictionary, otherwise append the word to the relevant value lists.
 #		Might be useful to use python's setdefault method just for shorter code XD
-def get_phonemes_to_words(word_dict):
+def get_phonemes_to_words(words):
     phonemes_to_words = {}
 
-    unique_words = set(word_dict.keys())
+    unique_words = set(words)
 
     for word in unique_words:
-        translated = pronouncing.phones_for_word(word)
+    	phonemes = phonemes_for(word)
 
-        if len(translated) == 0:
-            continue
+    	if phonemes is None:
+    		continue
 
-        phonemes = translated[0].split(" ")
-
-        for phoneme in phonemes:
-            if phoneme not in phonemes_to_words:
-                phonemes_to_words[phoneme] = set()
-
-            phonemes_to_words[phoneme].add(word)
+    	for phoneme in phonemes:
+    		if phoneme not in phonemes_to_words:
+    			phonemes_to_words[phoneme] = set()
+    		phonemes_to_words[phoneme].add(word)
 
     return phonemes_to_words
+
+def phonemes_for(word):
+	translated = pronouncing.phones_for_word(word)
+	if len(translated) == 0:
+		return None
+	return translated[0].split(" ")
 
 # Step 4: Make dictionary of phonemes (aka our internal representation of phonemes) to audio clips - call this phoneme_audios and pickle it
 # For this step, we simply iterate through all the keys of phoneme_words. For each key, we iterate through the words in the
@@ -182,7 +185,7 @@ if __name__ == '__main__':
     rev_results = get_rev_results(filepath)
     punct_dict, word_dict = process_transcript(rev_results, filepath)
 
-    phonemes_to_words = get_phonemes_to_words(word_dict)
+    phonemes_to_words = get_phonemes_to_words(word_dict.keys())
 
     phoneme_audios = get_phoneme_audios(word_dict, phonemes_to_words)
 

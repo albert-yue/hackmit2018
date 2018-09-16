@@ -1,6 +1,7 @@
 import numpy as np
 import pickle as pkl
 import re
+from generate_data_structs import phonemes_for
 
 # We read in 
 
@@ -34,12 +35,11 @@ def generate_audio_out(input_text):
 
 def generate_audio_for_word(word):
 	# get the phonemes
-	phonemes = get_phonemes(word)
+	phonemes = phonemes_for(word)
 	# convert each phoneme to audio clip
 	audio_clips = [clip[pho] for pho in phonemes]
-	# stitch together
-	stitched = stitch_audio(audio_clips)
-	# return
+	# stitch together and return
+	return stitch_audio(audio_clips)
 
 def stitch_audio(audio_clips):
 	"""
