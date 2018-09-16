@@ -191,5 +191,4 @@ if __name__ == '__main__':
     phoneme_audios = get_phoneme_audios(word_dict, phonemes_to_words)
 
     pickle.dump(phoneme_audios, open('phoneme_audios.p', 'wb'))
-
-
+    pickle.dump(punct_dict, open('punctuation_dict.p', 'wb'))
