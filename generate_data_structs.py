@@ -165,8 +165,9 @@ def get_phonemes_to_words(word_dict):
 #		value list and for each one we get its list of audioclips (from word_audios), then we concatenate all these lists
 #		of audio clips.
 
-rev_results = get_rev_results(filepath)
-print(rev_results[len(rev_results)-1])
-punct_dict, word_dict = process_transcript(rev_results, filepath)
+if __name__ == '__main__':
+	rev_results = get_rev_results(filepath)
+	print(rev_results[len(rev_results)-1])
+	punct_dict, word_dict = process_transcript(rev_results, filepath)
 
-print(get_phonemes_to_words(word_dict))
+	print(get_phonemes_to_words(word_dict))
