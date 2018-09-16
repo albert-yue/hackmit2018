@@ -13,7 +13,7 @@ with open("phoneme_audios.p", 'rb')as p:
 print(phoneme_audios.keys())
 #print(phoneme_audios['M'][0].shape)
 
-num_guesses = 10
+num_guesses = 100
 min_length = 600
 print("Min length: ", min_length)
 max_length = 25000
