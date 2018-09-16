@@ -1,5 +1,6 @@
 import requests
 import time
+from scipy.io import wavfile
 
 # We use this file to generate our data structures
 # For every new audio file, this file should be run once
@@ -8,7 +9,7 @@ import time
 #		punctuation_lengths - A dictionary mapping different punctuation to average length (in seconds) of the pause
 #		phoneme_audios - A dictionary mapping phonemes to lists of audio clips of words containing the phoneme
 
-filepath = 'C:\\Users\\liort\\Downloads\\ndt1.mp3'
+filepath = 'ndt1.wav'
 rev_api_key = open("rev_api_key.txt", "r").read()
 
 # TODO: we need to have some internal representation of phonemes (maybe just number them). I feel that just "spelling"
@@ -47,11 +48,16 @@ def create_rev_job(filepath, headers):
     response_body = request.json()
     return response_body['id']
 
+def view_job(job_id, headers):
+    # Code adapated from https://github.com/amikofalvy/revai-python-example/blob/master/example.py
+    url = f'https://api.rev.ai/revspeech/v1beta/jobs/{job_id}'
+    request = requests.get(url, headers=headers)
+
+    return request.json()
+
 def get_transcript(transcript_id, headers):
     # Code adapated from https://github.com/amikofalvy/revai-python-example/blob/master/example.py
-    transcript_id = create_rev_job(filepath, headers)
-
-    url = f'https://api.rev.ai/revspeech/v1beta/jobs/{transcript_id}'
+    url = f'https://api.rev.ai/revspeech/v1beta/jobs/{transcript_id}/transcript'
 
     headers['Accept'] = 'application/vnd.rev.transcript.v1.0+json'
     request = requests.get(url, headers=headers)
@@ -64,20 +70,14 @@ def get_rev_results(filepath):
     
     transcript_id = create_rev_job(filepath, headers)
 
-    headers = {'Authorization': 'Bearer ' + rev_api_key}
-
     status = 'in_progress'
     response = ''
 
     while status == 'in_progress':
-        response = get_transcript(transcript_id, headers)
+        response = view_job(transcript_id, headers)
         status = response['status']
-        print(response)
 
-    print(response)        
-        
-
-get_rev_results(filepath)
+    return get_transcript(transcript_id, headers)['monologues'][0]['elements']
 
 # Step 2: Read in audio file and create {word: [list of audio clips]} dictionary using REV results - call this word_audios
 #			We should also create another dictionary {punct: length} - call this punctuation_lengths and pickle it
@@ -86,6 +86,46 @@ get_rev_results(filepath)
 #		and the end of the previous word. This is also how we will approach spaces.
 # Another thing to note is that we may want to discard words predicted with <50% confidence or something as that's
 #		probably not accurate
+def process_transcript(rev_results, filepath):
+    fs, data = wavfile.read(filepath)
+    sampling_rate = 44100
+    word_dict = {}
+    punct_dict = {}
+    punct_lengths = {}
+
+    for i in range(len(rev_results)):
+        # Handle punctuation.
+        if rev_results[i]['type'] == 'punct':
+            value = rev_results[i]['value']
+            if i == 0 or  i == len(rev_results) - 1:
+                continue
+            duration = rev_results[i+1]['ts'] - rev_results[i-1]['end_ts']
+
+            if value not in punct_lengths:
+                punct_lengths[value] = []
+            
+            punct_lengths[value].append(duration)
+
+            continue
+
+        # Handle words.
+        if rev_results[i]['type'] != 'text' or rev_results[i]['confidence'] < 0.5:
+            continue
+        
+        word = rev_results[i]['value']
+        start_index = int(sampling_rate * rev_results[i]['ts'])
+        end_index = int(sampling_rate * rev_results[i]['end_ts'])
+
+        if word not in word_dict:
+            word_dict[word] = []
+
+        word_dict[word].append(data[start_index:end_index])
+
+    for key, value in punct_lengths.items():
+        punct_dict[key] = sum(punct_lengths[key])/len(punct_lengths[key])
+
+    return punct_dict, word_dict
+
 
 
 # Step 3: Make dictionary of phonemes (aka our internal representation of phonemes) to words - call this phoneme_words
@@ -93,8 +133,35 @@ get_rev_results(filepath)
 #		in them (perhaps by pinging a website using the requests module?). Other than that, this should be quite simple;
 #		just add a newly discovered phoneme to the dictionary, otherwise append the word to the relevant value lists.
 #		Might be useful to use python's setdefault method just for shorter code XD
+def get_phonemes_to_words(word_dict):
+    phonemes_to_words = {}
+
+    for word in word_dict.keys():
+        translated = []
+
+        stress = ""
+        for char in word:
+            if char == "ˌ" or char == "ˈ":
+                stress = char
+                continue
+            
+            phoneme = stress + char
+
+            if phoneme not in phonemes_to_words:
+                phonemes_to_words = set()
+
+            phonemes_to_words[phoneme].add(word)
+            stress = ""
+
+    return phonemes_to_words
 
 # Step 4: Make dictionary of phonemes (aka our internal representation of phonemes) to audio clips - call this phoneme_audios and pickle it
 # For this step, we simply iterate through all the keys of phoneme_words. For each key, we iterate through the words in the
 #		value list and for each one we get its list of audioclips (from word_audios), then we concatenate all these lists
 #		of audio clips.
+
+rev_results = get_rev_results(filepath)
+print(rev_results[len(rev_results)-1])
+punct_dict, word_dict = process_transcript(rev_results, filepath)
+
+print(get_phonemes_to_words(word_dict))
