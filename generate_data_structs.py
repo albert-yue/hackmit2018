@@ -1,5 +1,7 @@
 import requests
 import time
+import pronouncing
+import pickle
 from scipy.io import wavfile
 from itertools import chain
 
@@ -81,8 +83,8 @@ def get_rev_results(filepath):
     return flatten([monologue['elements'] for monologue in get_transcript(transcript_id, headers)['monologues']])
 
 def flatten(list_of_lists):
-	# from https://docs.python.org/3/library/itertools.html#recipes
-	return list(chain.from_iterable(list_of_lists))
+    # from https://docs.python.org/3/library/itertools.html#recipes
+    return list(chain.from_iterable(list_of_lists))
 
 # Step 2: Read in audio file and create {word: [list of audio clips]} dictionary using REV results - call this word_audios
 #			We should also create another dictionary {punct: length} - call this punctuation_lengths and pickle it
@@ -141,22 +143,21 @@ def process_transcript(rev_results, filepath):
 def get_phonemes_to_words(word_dict):
     phonemes_to_words = {}
 
-    for word in word_dict.keys():
-        translated = []
+    unique_words = set(word_dict.keys())
 
-        stress = ""
-        for char in word:
-            if char == "ˌ" or char == "ˈ":
-                stress = char
-                continue
-            
-            phoneme = stress + char
+    for word in unique_words:
+        translated = pronouncing.phones_for_word(word)
 
+        if len(translated) == 0:
+            continue
+
+        phonemes = translated[0].split(" ")
+
+        for phoneme in phonemes:
             if phoneme not in phonemes_to_words:
-                phonemes_to_words = set()
+                phonemes_to_words[phoneme] = set()
 
             phonemes_to_words[phoneme].add(word)
-            stress = ""
 
     return phonemes_to_words
 
@@ -164,10 +165,27 @@ def get_phonemes_to_words(word_dict):
 # For this step, we simply iterate through all the keys of phoneme_words. For each key, we iterate through the words in the
 #		value list and for each one we get its list of audioclips (from word_audios), then we concatenate all these lists
 #		of audio clips.
+def get_phoneme_audios(word_dict, phonemes_to_words):
+    phoneme_audios = {}
+
+    for phoneme, words in phonemes_to_words.items():
+        all_clips = []
+        for word in words:
+            for clip in word_dict[word]:
+                all_clips.append(clip)
+        
+        phoneme_audios[phoneme] = all_clips
+    
+    return phoneme_audios
 
 if __name__ == '__main__':
-	rev_results = get_rev_results(filepath)
-	print(rev_results[len(rev_results)-1])
-	punct_dict, word_dict = process_transcript(rev_results, filepath)
+    rev_results = get_rev_results(filepath)
+    punct_dict, word_dict = process_transcript(rev_results, filepath)
 
-	print(get_phonemes_to_words(word_dict))
+    phonemes_to_words = get_phonemes_to_words(word_dict)
+
+    phoneme_audios = get_phoneme_audios(word_dict, phonemes_to_words)
+
+    pickle.dump(phoneme_audios, open('phoneme_audios.p', 'wb'))
+
+
