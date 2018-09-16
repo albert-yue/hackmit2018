@@ -4,6 +4,7 @@ import random
 import numpy as np
 import sys
 import pickle
+import matplotlib.pyplot as plt
 
 with open("phoneme_audios.p", 'rb')as p:
 	phoneme_audios = pickle.load(p) # TODO this should be read in somehow
@@ -23,6 +24,7 @@ def evaluate(candidate_field, phoneme):
 	retval = 0
 	for audio in audios:
 		retval += np.max(np.correlate(candidate_field, audio, "full"))
+	retval /= np.sqrt(len(candidate_field))
 	print(retval)
 	return retval
 
@@ -56,7 +58,7 @@ def trim_best(field, thresh, num):
 			current += 1
 		if current >= num:
 			break
-	#print(last)
+	print(last)
 	return field[:last+1]
 
 phoneme_dict = {}
@@ -110,8 +112,12 @@ for i in range(num_guesses):
 	field_evals.append(evaluate(receptive_field, phoneme))
 best_guess_ind = np.argmax(np.array(field_evals))
 good_guess = fields[best_guess_ind]
-phoneme_dict[phoneme] = trim_best(good_to_best(good_guess, phoneme), 1, 2) # TODO: Tune these last two parameters
+best_guess = good_to_best(good_guess, phoneme)
+phoneme_dict[phoneme] = trim_best(best_guess, 1000, 1000) # TODO: Tune these last two parameters
 evaluate(phoneme_dict[phoneme], phoneme)
+# plt.plot(first)
+plt.plot(second)
+plt.show()
 
 pickle.dump(phoneme_dict, open('phoneme_dict.p', 'wb'))
 
