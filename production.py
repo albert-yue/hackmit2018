@@ -67,7 +67,7 @@ for phoneme in phoneme_audios:
 	fields = []
 	field_evals = []
 	for i in range(num_guesses):
-		indices = [0, 1] #random.sample(range(len(audios)), 2)
+		indices = random.sample(range(len(audios)), 2)
 		first = audios[indices[0]]
 		second = audios[indices[1]]
 		#print(first.shape, second.shape)
