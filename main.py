@@ -1,5 +1,5 @@
 import numpy as np
-import pickle as pkl
+import pickle
 import re
 from generate_data_structs import phonemes_for
 
@@ -7,6 +7,7 @@ from generate_data_structs import phonemes_for
 
 print("This program lets you make NAME HERE pronounce anything!")
 
+clip = pickle.load(open("phoneme_dict.p", "rb"))
 again = 'y'
 
 while (again.lower() == 'y'):

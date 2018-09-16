@@ -2,8 +2,9 @@
 
 import random
 import numpy as np
+import pickle
 
-phoneme_audios = {"test": [np.array(list(range(10))), np.array([1, 2, -1, 3, 4, -2, 1])]} # TODO this should be read in somehow
+phoneme_audios = pickle.load(open("phoneme_audios.p", "rb")) # TODO this should be read in somehow
 # The structure of this data structure is phoneme to list of audios (each of which is a list)
 
 num_guesses = 1
@@ -99,8 +100,7 @@ for phoneme in phoneme_audios:
 	good_guess = fields[best_guess_ind]
 	phoneme_dict[phoneme] = trim_best(good_to_best(good_guess, phoneme), 1, 2) # TODO: Tune these last two parameters
 
-# TODO: Write phoneme_dict via  pickle
-print(phoneme_dict)
+pickle.dump(phoneme_dict, open('phoneme_dict.p', 'wb'))
 
 		
 
