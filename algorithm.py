@@ -3,8 +3,13 @@
 import random
 import numpy as np
 
-phoneme_audios = {"test": np.array([list(range(10)), [1, 2, -1, 3, 4, -2, 1]])} # TODO this should be read in somehow
+phoneme_audios = {"test": [np.array(list(range(10))), np.array([1, 2, -1, 3, 4, -2, 1])]} # TODO this should be read in somehow
 # The structure of this data structure is phoneme to list of audios (each of which is a list)
+
+num_guesses = 1
+min_length = 2
+max_length = 10
+threshold = 7
 
 def evaluate(candidate_field, phoneme):
 	audios = phoneme_audios[phoneme]
@@ -14,16 +19,45 @@ def evaluate(candidate_field, phoneme):
 	print(retval)
 	return retval
 
-num_guesses = 1
-min_length = 2
-threshold = 7
+def good_to_best(field, phoneme):
+	print(field)
+	audios = phoneme_audios[phoneme]
+	retval = 0
+	best = np.zeros(max_length)
+	for audio in audios:
+		buffered_audio = np.hstack((np.zeros(len(field)), audio, np.zeros(len(field))))
+		print(buffered_audio)
+		print(np.argmax(np.correlate(buffered_audio, field, "full")))
+		clipped_overlap = buffered_audio[np.argmax(np.correlate(buffered_audio, field, "full"))-len(field)+1:][:max_length]
+		print(clipped_overlap)
+		to_add = clipped_overlap
+		if len(clipped_overlap) < max_length:
+			to_add = np.hstack((clipped_overlap, np.zeros(max_length-len(clipped_overlap))))
+		print(to_add)
+		best = np.add(best, to_add)
+	return best/len(audios)
 
+def trim_best(field, thresh, num):
+	current = 0
+	last = max_length
+	for i in range(len(field)):
+		val = field[i]
+		if (abs(val) > thresh):
+			last = i
+			current = 0
+		else:
+			current += 1
+		if current >= num:
+			break
+	return field[:last+1]
+
+phoneme_dict = {}
 for phoneme in phoneme_audios:
 	audios = phoneme_audios[phoneme]
 	fields = []
 	field_evals = []
 	for i in range(num_guesses):
-		indices = random.sample(range(audios.shape[0]), 2)
+		indices = random.sample(range(len(audios)), 2)
 		first = audios[indices[0]]
 		second = audios[indices[1]]
 		print(np.correlate(first, second, "full"))
@@ -61,5 +95,12 @@ for phoneme in phoneme_audios:
 		fields.append(receptive_field)
 		evaluate(receptive_field, phoneme)
 		field_evals.append(evaluate(receptive_field, phoneme))
+	best_guess_ind = np.argmax(np.array(field_evals))
+	good_guess = fields[best_guess_ind]
+	phoneme_dict[phoneme] = trim_best(good_to_best(good_guess, phoneme), 1, 2) # TODO: Tune these last two parameters
+
+# TODO: Write phoneme_dict via  pickle
+print(phoneme_dict)
+
 		
 
