@@ -4,6 +4,7 @@ import pronouncing
 import pickle
 from scipy.io import wavfile
 from itertools import chain
+import numpy as np
 
 # We use this file to generate our data structures
 # For every new audio file, this file should be run once
@@ -126,7 +127,10 @@ def process_transcript(rev_results, filepath):
         if word not in word_dict:
             word_dict[word] = []
 
-        word_dict[word].append(data[start_index:end_index])
+        audio_clip = [0]*(end_index-start_index)
+        for i in range(end_index-start_index):
+            audio_clip[i] = data[start_index+i][0]
+        word_dict[word].append(np.array(audio_clip))
 
     for key, value in punct_lengths.items():
         punct_dict[key] = sum(punct_lengths[key])/len(punct_lengths[key])
