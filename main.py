@@ -1,4 +1,6 @@
+import numpy as np
 import pickle as pkl
+import re
 
 # We read in 
 
@@ -14,5 +16,35 @@ while (again.lower() == 'y'):
 	again = input("Audio generated! Generate more? (Y/N): ")
 
 # For this method, we want to split the input text
+def ispunc(word):
+	for char in word:
+		if char.isalnum():
+			return False
+	return True
+
 def generate_audio_out(input_text):
-	pass
+	words = re.findall(r"[\w']+|[.,!?;]", input_text)
+	clips = []
+
+	for word in words:
+		if not ispunc(word):
+			clips.append(generate_audio_for_word(word))
+		clips.append(np.zeros(10))
+	return stitch_audio(clips)
+
+def generate_audio_for_word(word):
+	# get the phonemes
+	phonemes = get_phonemes(word)
+	# convert each phoneme to audio clip
+	audio_clips = [clip[pho] for pho in phonemes]
+	# stitch together
+	stitched = stitch_audio(audio_clips)
+	# return
+
+def stitch_audio(audio_clips):
+	"""
+	Stitches together a list of audio clips, each of which is a numpy array of waveform values
+
+	Implementation: naively concatenate together the clips
+	"""
+	np.concatenate(audio_clips)
