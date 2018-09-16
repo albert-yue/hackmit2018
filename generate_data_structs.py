@@ -1,3 +1,6 @@
+import requests
+import time
+
 # We use this file to generate our data structures
 # For every new audio file, this file should be run once
 # As input, this file will take an audio file (specified via f)
@@ -5,7 +8,8 @@
 #		punctuation_lengths - A dictionary mapping different punctuation to average length (in seconds) of the pause
 #		phoneme_audios - A dictionary mapping phonemes to lists of audio clips of words containing the phoneme
 
-filename = ''
+filepath = 'C:\\Users\\liort\\Downloads\\ndt1.mp3'
+rev_api_key = open("rev_api_key.txt", "r").read()
 
 # TODO: we need to have some internal representation of phonemes (maybe just number them). I feel that just "spelling"
 #		them out is not the best idea.
@@ -33,7 +37,47 @@ filename = ''
 #   ]
 # }
 # TODO: See how this gets read into python
+def create_rev_job(filepath, headers):
+    # Code adapated from https://github.com/amikofalvy/revai-python-example/blob/master/example.py
+    url = 'https://api.rev.ai/revspeech/v1beta/jobs'
+    files = { 'media': (filepath, open(filepath, 'rb'), 'audio/mp3') }
+    
+    request = requests.post(url, headers=headers, files=files)
 
+    response_body = request.json()
+    return response_body['id']
+
+def get_transcript(transcript_id, headers):
+    # Code adapated from https://github.com/amikofalvy/revai-python-example/blob/master/example.py
+    transcript_id = create_rev_job(filepath, headers)
+
+    url = f'https://api.rev.ai/revspeech/v1beta/jobs/{transcript_id}'
+
+    headers['Accept'] = 'application/vnd.rev.transcript.v1.0+json'
+    request = requests.get(url, headers=headers)
+
+    return request.json()
+
+def get_rev_results(filepath):    
+    # Create the rev job.
+    headers = {'Authorization': 'Bearer ' + rev_api_key}
+    
+    transcript_id = create_rev_job(filepath, headers)
+
+    headers = {'Authorization': 'Bearer ' + rev_api_key}
+
+    status = 'in_progress'
+    response = ''
+
+    while status == 'in_progress':
+        response = get_transcript(transcript_id, headers)
+        status = response['status']
+        print(response)
+
+    print(response)        
+        
+
+get_rev_results(filepath)
 
 # Step 2: Read in audio file and create {word: [list of audio clips]} dictionary using REV results - call this word_audios
 #			We should also create another dictionary {punct: length} - call this punctuation_lengths and pickle it
