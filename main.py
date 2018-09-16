@@ -17,8 +17,9 @@ def generate_audio_out(input_text, phoneme_clips):
 
 	for word in words:
 		if not ispunc(word):
-			clips.append(generate_audio_for_word(word, phoneme_clips))
-		clips.append(np.zeros(10))
+			word_audio = generate_audio_for_word(word, phoneme_clips)
+			clips.append(word_audio)
+		clips.append(np.zeros(10000))
 	return stitch_audio(clips)
 
 def generate_audio_for_word(word, phoneme_clips):
@@ -35,7 +36,7 @@ def stitch_audio(audio_clips):
 
 	Implementation: naively concatenate together the clips
 	"""
-	np.concatenate(audio_clips)
+	return np.concatenate(audio_clips)
 
 def generate_audio_wav(input_text, phoneme_clips):
 	wavfile.write("media/output.wav", 44100, generate_audio_out(input_text, phoneme_clips))
@@ -43,7 +44,7 @@ def generate_audio_wav(input_text, phoneme_clips):
 if __name__ == "__main__":
 	print("This program lets you make NAME HERE pronounce anything!")
 
-	with open("prod_phoneme_dict.p", 'rb')as p:
+	with open("prod_phoneme_dict2.p", 'rb')as p:
 		phoneme_clips = pickle.load(p)
 	again = 'y'
 

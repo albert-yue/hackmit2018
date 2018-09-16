@@ -112,14 +112,15 @@ for phoneme in phoneme_audios:
 		second_field = second[second_start+start:second_start+end-1+min_length]
 		#print(first_field, second_field)
 		# print(len(first_field), len(second_field))
-		receptive_field = np.add(first_field, second_field)/2
+		# receptive_field = np.add(first_field, second_field)/2
+		receptive_field = first_field
 
 		fields.append(receptive_field)
 		field_evals.append(evaluate(receptive_field, phoneme))
 	best_guess_ind = np.argmax(np.array(field_evals))
 	good_guess = fields[best_guess_ind]
-	best_guess = good_to_best(good_guess, phoneme)
-	phoneme_dict[phoneme] = trim_best(best_guess, 500, 2000) # TODO: Tune these last two parameters
+	# best_guess = good_to_best(good_guess, phoneme)
+	phoneme_dict[phoneme] = trim_best(good_guess, 500, 2000) # TODO: Tune these last two parameters
 print(evaluate(phoneme_dict[phoneme], phoneme))
 # plt.subplot(211)
 # plt.plot(first)
@@ -128,7 +129,7 @@ print(evaluate(phoneme_dict[phoneme], phoneme))
 # # plt.plot(second)
 # plt.show()
 
-pickle.dump(phoneme_dict, open('prod_phoneme_dict.p', 'wb'))
+pickle.dump(phoneme_dict, open('prod_phoneme_dict2.p', 'wb'))
 
 		
 
