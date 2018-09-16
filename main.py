@@ -40,12 +40,12 @@ def stitch_audio(audio_clips):
 	np.concatenate(audio_clips)
 
 def generate_audio_wav(input_text, phoneme_clips):
-	wavfile.write("media/output.wav", 44000, generate_audio_out(input_text, phoneme_clips))
+	wavfile.write("media/output.wav", 44100, generate_audio_out(input_text, phoneme_clips))
 
 if __name__ == "__main__":
 	print("This program lets you make NAME HERE pronounce anything!")
 
-	with open("phoneme_dict.p", 'rb')as p:
+	with open("phoneme_dict.p", 'rb') as p:
 		phoneme_clips = pickle.load(p)
 	again = 'y'
 
