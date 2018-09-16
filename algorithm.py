@@ -5,7 +5,8 @@ import numpy as np
 import sys
 import pickle
 
-phoneme_audios = pickle.load(open("phoneme_audios.p", "rb")) # TODO this should be read in somehow
+with open("phoneme_audios.p", 'rb')as p:
+	phoneme_audios = pickle.load(p) # TODO this should be read in somehow
 # The structure of this data structure is phoneme to list of audios (each of which is a list)
 
 print(phoneme_audios.keys())
