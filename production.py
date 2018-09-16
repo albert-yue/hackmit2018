@@ -10,10 +10,10 @@ with open("phoneme_audios.p", 'rb')as p:
 	phoneme_audios = pickle.load(p) # TODO this should be read in somehow
 # The structure of this data structure is phoneme to list of audios (each of which is a list)
 
-#print(phoneme_audios.keys())
+print(phoneme_audios.keys())
 #print(phoneme_audios['M'][0].shape)
 
-num_guesses = 100
+num_guesses = 10
 min_length = 600
 print("Min length: ", min_length)
 max_length = 25000
@@ -63,6 +63,7 @@ def trim_best(field, thresh, num):
 
 phoneme_dict = {}
 for phoneme in phoneme_audios:
+	# phoneme = 'NG'
 	audios = phoneme_audios[phoneme]
 	fields = []
 	field_evals = []
@@ -83,6 +84,7 @@ for phoneme in phoneme_audios:
 		num_positions = first_end-first_start+1
 		if (num_positions < 0):
 			print("ERROR 1!")
+			continue
 		dot_products = np.zeros(num_positions)
 		for j in range(num_positions):
 			dot_products[j] = np.dot(first[first_start+j:first_start+j+min_length], second[second_start+j:second_start+j+min_length])
@@ -112,8 +114,14 @@ for phoneme in phoneme_audios:
 	best_guess_ind = np.argmax(np.array(field_evals))
 	good_guess = fields[best_guess_ind]
 	best_guess = good_to_best(good_guess, phoneme)
-	phoneme_dict[phoneme] = trim_best(best_guess, 1000, 1000) # TODO: Tune these last two parameters
-	evaluate(phoneme_dict[phoneme], phoneme)
+	phoneme_dict[phoneme] = trim_best(best_guess, 500, 2000) # TODO: Tune these last two parameters
+evaluate(phoneme_dict[phoneme], phoneme)
+# plt.subplot(211)
+# plt.plot(first)
+# plt.subplot(212)
+# plt.plot(best_guess)
+# # plt.plot(second)
+# plt.show()
 
 pickle.dump(phoneme_dict, open('phoneme_dict.p', 'wb'))
 

@@ -63,12 +63,12 @@ def trim_best(field, thresh, num):
 
 phoneme_dict = {}
 # for phoneme in phoneme_audios:
-phoneme = 'TH'
+phoneme = 'NG'
 audios = phoneme_audios[phoneme]
 fields = []
 field_evals = []
 for i in range(num_guesses):
-	indices = [0, 1] #random.sample(range(len(audios)), 2)
+	indices = random.sample(range(len(audios)), 2)
 	first = audios[indices[0]]
 	second = audios[indices[1]]
 	#print(first.shape, second.shape)
@@ -84,6 +84,7 @@ for i in range(num_guesses):
 	num_positions = first_end-first_start+1
 	if (num_positions < 0):
 		print("ERROR 1!")
+		continue
 	dot_products = np.zeros(num_positions)
 	for j in range(num_positions):
 		dot_products[j] = np.dot(first[first_start+j:first_start+j+min_length], second[second_start+j:second_start+j+min_length])
@@ -113,11 +114,13 @@ for i in range(num_guesses):
 best_guess_ind = np.argmax(np.array(field_evals))
 good_guess = fields[best_guess_ind]
 best_guess = good_to_best(good_guess, phoneme)
-phoneme_dict[phoneme] = trim_best(best_guess, 500, 5000) # TODO: Tune these last two parameters
+phoneme_dict[phoneme] = trim_best(best_guess, 500, 2000) # TODO: Tune these last two parameters
 evaluate(phoneme_dict[phoneme], phoneme)
+plt.subplot(211)
 plt.plot(first)
-# plt.plot(second)
+plt.subplot(212)
 plt.plot(best_guess)
+# plt.plot(second)
 plt.show()
 
 pickle.dump(phoneme_dict, open('phoneme_dict.p', 'wb'))
