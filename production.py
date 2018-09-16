@@ -10,12 +10,12 @@ with open("phoneme_audios.p", 'rb')as p:
 	phoneme_audios = pickle.load(p) # TODO this should be read in somehow
 # The structure of this data structure is phoneme to list of audios (each of which is a list)
 
-print(phoneme_audios.keys())
+# print(phoneme_audios.keys())
 #print(phoneme_audios['M'][0].shape)
 
-num_guesses = 100
+num_guesses = 10
 min_length = 600
-print("Min length: ", min_length)
+# print("Min length: ", min_length)
 max_length = 25000
 threshold = 10000
 
@@ -25,7 +25,6 @@ def evaluate(candidate_field, phoneme):
 	for audio in audios:
 		retval += np.max(np.correlate(candidate_field, audio, "full"))
 	retval /= np.sqrt(len(candidate_field))
-	print(retval)
 	return retval
 
 def good_to_best(field, phoneme):
@@ -63,8 +62,11 @@ def trim_best(field, thresh, num):
 
 phoneme_dict = {}
 for phoneme in phoneme_audios:
+	print(phoneme)
 	# phoneme = 'NG'
 	audios = phoneme_audios[phoneme]
+	if len(audios) < 2:
+		continue
 	fields = []
 	field_evals = []
 	for i in range(num_guesses):
@@ -89,10 +91,10 @@ for phoneme in phoneme_audios:
 		for j in range(num_positions):
 			dot_products[j] = np.dot(first[first_start+j:first_start+j+min_length], second[second_start+j:second_start+j+min_length])
 		#print(dot_products)
-		print(np.max(dot_products))
-		print(np.sort(dot_products)[-100:-90])
+		# print(np.max(dot_products))
+		# print(np.sort(dot_products)[-100:-90])
 		thresholded_dots = np.where(dot_products > threshold, 1, 0)
-		print(np.sum(thresholded_dots))
+		# print(np.sum(thresholded_dots))
 		bounded = np.hstack(([0], thresholded_dots, [0]))
 		# get 1 at run starts and -1 at run ends
 		difs = np.diff(bounded)
@@ -100,13 +102,16 @@ for phoneme in phoneme_audios:
 		run_starts, = np.where(difs > 0)
 		run_ends, = np.where(difs < 0)
 		# #print(run_starts, run_ends)
+		if len(run_ends-run_starts) <1:
+			print("ERROR  2!")
+			continue
 		temp_ind = np.argmax(run_ends - run_starts)
 		start = run_starts[temp_ind]
 		end = run_ends[temp_ind]
 		first_field = first[first_start+start:first_start+end-1+min_length]
 		second_field = second[second_start+start:second_start+end-1+min_length]
 		#print(first_field, second_field)
-		print(len(first_field), len(second_field))
+		# print(len(first_field), len(second_field))
 		receptive_field = np.add(first_field, second_field)/2
 
 		fields.append(receptive_field)
@@ -115,7 +120,7 @@ for phoneme in phoneme_audios:
 	good_guess = fields[best_guess_ind]
 	best_guess = good_to_best(good_guess, phoneme)
 	phoneme_dict[phoneme] = trim_best(best_guess, 500, 2000) # TODO: Tune these last two parameters
-evaluate(phoneme_dict[phoneme], phoneme)
+print(evaluate(phoneme_dict[phoneme], phoneme))
 # plt.subplot(211)
 # plt.plot(first)
 # plt.subplot(212)
@@ -123,7 +128,7 @@ evaluate(phoneme_dict[phoneme], phoneme)
 # # plt.plot(second)
 # plt.show()
 
-pickle.dump(phoneme_dict, open('phoneme_dict.p', 'wb'))
+pickle.dump(phoneme_dict, open('prod_phoneme_dict.p', 'wb'))
 
 		
 

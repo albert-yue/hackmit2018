@@ -1,5 +1,3 @@
-308395613
-
 import numpy as np
 from scipy.io import wavfile
 import pickle
@@ -45,7 +43,7 @@ def generate_audio_wav(input_text, phoneme_clips):
 if __name__ == "__main__":
 	print("This program lets you make NAME HERE pronounce anything!")
 
-	with open("phoneme_dict.p", 'rb')as p:
+	with open("prod_phoneme_dict.p", 'rb')as p:
 		phoneme_clips = pickle.load(p)
 	again = 'y'
 
