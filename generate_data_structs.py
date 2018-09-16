@@ -13,10 +13,8 @@ from itertools import chain
 #		phoneme_audios - A dictionary mapping phonemes to lists of audio clips of words containing the phoneme
 
 filepath = 'media/ndt1.wav'
-rev_api_key = open("rev_api_key.txt", "r").read()
-
-# TODO: we need to have some internal representation of phonemes (maybe just number them). I feel that just "spelling"
-#		them out is not the best idea.
+with open("rev_api_key.txt", "r") as key:
+	rev_api_key = key.read()
 
 # Step 1: Send audio file to REV api and get results - call them rev_results
 # Example result: 
@@ -40,7 +38,6 @@ rev_api_key = open("rev_api_key.txt", "r").read()
 #     }
 #   ]
 # }
-# TODO: See how this gets read into python
 def create_rev_job(filepath, headers):
     # Code adapted from https://github.com/amikofalvy/revai-python-example/blob/master/example.py
     url = 'https://api.rev.ai/revspeech/v1beta/jobs'
